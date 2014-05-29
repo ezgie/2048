@@ -67,21 +67,29 @@ var GameManager = {
             var columnIndexManager = (targetCellIndex == 0) ? 1 : -1;
         }
 
+        var anyChanges = false;
         for(var i = 0; i < 4; i++){
             if(isRow) {
                 var cells = this.getOrderedRow(targetCellIndex, rowIndexManager, i, 0);    
             } else {
                 var cells = this.getOrderedRow(i, 0, targetCellIndex, columnIndexManager);
-            }            
+            }     
+            var cellsBeforeKeydown = JSON.parse(JSON.stringify(cells));   
             var cells = this.normalizeCells(cells);
             var cells = this.processMove(cells);
             for(var j = 0; j < 4; j++){
                 CellManager.show(cells[j]);
             }
+            anyChanges = anyChanges || this.isListChanged(cellsBeforeKeydown, cells);
         }
-
-        this.insertNewNumber();
-
+        if(anyChanges) {
+            this.insertNewNumber();
+        } else {
+            console.log("isMovePossible : " + this.isMovePossible());
+            if(!this.isMovePossible()){
+                this.gameOver();
+            }
+        }
     },
     getOrderedRow: function(row, rowIndexManager, column, columnIndexManager) {
         var cells = [];
@@ -122,6 +130,35 @@ var GameManager = {
             } 
         }
         return cells;
+    },
+    isListChanged: function(cellsBeforeKeydown, cells) {
+        for(var i = 0; i < 4; i++) {
+            if(cellsBeforeKeydown[i].number != cells[i].number) {
+                return true;
+            }
+        }
+        return false;
+    },
+    isMovePossible: function() {
+        var emptyCells = this.getEmptyCells();
+        if(emptyCells.length == 0) {
+            for(var row = 0; row < 3; row++) {
+                for(var column = 0; column < 3; column++) {
+                    var thisNumber = CellManager.getNumberInCell(row, column);
+                    var rightNumber = CellManager.getNumberInCell(row, column + 1);
+                    var bottomNumber = CellManager.getNumberInCell(row + 1, column);
+                    if(thisNumber == rightNumber || thisNumber == bottomNumber) {
+                        return true;
+                    }
+                }
+            }
+        } else {
+            return true;
+        }
+        return false;
+    },
+    gameOver: function() {
+        alert("TODO - gameOver");
     }
 }
 
