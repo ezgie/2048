@@ -142,13 +142,20 @@ var GameManager = {
     isMovePossible: function() {
         var emptyCells = this.getEmptyCells();
         if(emptyCells.length == 0) {
-            for(var row = 0; row < 3; row++) {
-                for(var column = 0; column < 3; column++) {
+            for(var row = 0; row < 4; row++) {
+                for(var column = 0; column < 4; column++) {
                     var thisNumber = CellManager.getNumberInCell(row, column);
-                    var rightNumber = CellManager.getNumberInCell(row, column + 1);
-                    var bottomNumber = CellManager.getNumberInCell(row + 1, column);
-                    if(thisNumber == rightNumber || thisNumber == bottomNumber) {
-                        return true;
+                    if(column < 3){
+                        var rightNumber = CellManager.getNumberInCell(row, column + 1);
+                        if(thisNumber == rightNumber) {
+                            return true;
+                        }
+                    } 
+                    if(row < 3) {                    
+                        var bottomNumber = CellManager.getNumberInCell(row + 1, column);
+                        if(thisNumber == bottomNumber) {
+                            return true;
+                        }
                     }
                 }
             }
