@@ -85,7 +85,6 @@ var GameManager = {
         if(anyChanges) {
             this.insertNewNumber();
         } else {
-            console.log("isMovePossible : " + this.isMovePossible());
             if(!this.isMovePossible()){
                 this.gameOver();
             }
