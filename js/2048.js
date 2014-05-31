@@ -27,7 +27,7 @@ var GameManager = {
         var emptyCells = [];
         for(var row = 0; row < 4; row++) {
             for(var column = 0; column < 4; column++) {
-                if(!CellManager.getNumberInCell(row, column)){
+                if(!CellManager.getBoxInCell(row, column)){
                     emptyCells.push({
                         row: row,
                         column: column
@@ -67,23 +67,22 @@ var GameManager = {
             var columnIndexManager = (targetCellIndex == 0) ? 1 : -1;
         }
 
-        var anyChanges = false;
+        var anyChanges = true;
         for(var i = 0; i < 4; i++){
             if(isRow) {
                 var cells = this.getOrderedRow(targetCellIndex, rowIndexManager, i, 0);    
             } else {
                 var cells = this.getOrderedRow(i, 0, targetCellIndex, columnIndexManager);
-            }     
-            var cellsBeforeKeydown = JSON.parse(JSON.stringify(cells));   
-            var cells = this.normalizeCells(cells);
-            var cells = this.processMove(cells);
-            for(var j = 0; j < 4; j++){
-                CellManager.show(cells[j]);
             }
-            anyChanges = anyChanges || this.isListChanged(cellsBeforeKeydown, cells);
+            var changed = this.move(cells);
+            anyChanges = anyChanges || changed;
         }
         if(anyChanges) {
-            this.insertNewNumber();
+            var self = this;
+            $(":animated").promise().done(function() {
+                self.insertNewNumber();
+            });
+            
         } else {
             if(!this.isMovePossible()){
                 this.gameOver();
@@ -96,7 +95,7 @@ var GameManager = {
             cells.push({
                 row: row,
                 column: column,
-                number: CellManager.getNumberInCell(row, column)
+                num: CellManager.getNumberInCell(row, column)
             });
             row += rowIndexManager;
             column += columnIndexManager;
@@ -104,39 +103,76 @@ var GameManager = {
         return cells;
     },
 
-    normalizeCells: function(cells) {
-        for(var i = 0; i< 3; i++){
-            if(!cells[i].number) {
-                for(var j=i+1; j<4; j++) {
-                    if(cells[j].number) {
-                        cells[i].number = cells[j].number;
-                        cells[j].number = "";
-                        break;
+    move: function(cells) {
+            var isAlreadyMerged = false;
+        for(var currIndex = 0; currIndex< 3; currIndex++){
+
+            var currRow = cells[currIndex].row;
+            var currColumn = cells[currIndex].column;
+            var currNum = cells[currIndex].num;
+
+            if(currNum && isAlreadyMerged) {
+                continue;
+            } else {
+                for(var firstNextIndex=currIndex+1; firstNextIndex<4; firstNextIndex++) {
+
+                    if(cells[firstNextIndex].num) {
+
+                        var firstNextRow = cells[firstNextIndex].row;
+                        var firstNextColumn = cells[firstNextIndex].column;
+                        var firstNextNum = cells[firstNextIndex].num;
+
+                        if(currNum && currNum != firstNextNum) {
+                            break;
+                        } else if(!currNum) {
+                            var secondNextRow = undefined;
+                            var secondNextColumn = undefined;
+                            var secondNextNum = undefined;
+
+                            var secondNextIndex = firstNextIndex+1;
+
+                            if(!isAlreadyMerged && firstNextIndex < 3) {
+
+                                secondNextIndex = firstNextIndex+1;
+                                while(secondNextIndex < 4) {
+                                    if(cells[secondNextIndex].num) {
+                                        secondNextRow = cells[secondNextIndex].row;
+                                        secondNextColumn = cells[secondNextIndex].column;
+                                        secondNextNum = cells[secondNextIndex].num;
+
+                                        if(secondNextNum == firstNextNum) {
+                                            break;
+                                        }
+                                        
+                                    }
+                                    secondNextIndex += 1;
+                                }
+                            }
+                        }
+                        if(firstNextNum == secondNextNum) {
+                            cells[currIndex].num = cells[firstNextIndex].num * 2;
+                            cells[firstNextIndex].num = undefined;
+                            cells[secondNextIndex].num = undefined;
+                            isAlreadyMerged = true;
+
+                            CellManager.moveBox(firstNextRow, firstNextColumn, firstNextNum, currRow, currColumn, cells[currIndex].num);
+                            CellManager.moveBox(secondNextRow, secondNextColumn, secondNextNum, currRow, currColumn, cells[currIndex].num);
+                            
+                            break;
+                        } else {
+                            
+                            cells[currIndex].num = cells[firstNextIndex].num;
+                            cells[firstNextIndex].num = undefined;
+
+                            CellManager.moveBox(firstNextRow, firstNextColumn, firstNextColumn, currRow, currColumn, currNum * 2);
+
+                            break;
+                        }
                     }
                 }
             }
         }
         return cells;
-    },
-    processMove: function(cells) {
-        for(var i = 0; i< 3; i++){
-            if(!cells[i].number) {
-                break;
-            } else if(cells[i].number == cells[i+1].number) {
-                cells[i].number *= 2;
-                cells[i+1].number = "";
-                cells = this.normalizeCells(cells);
-            } 
-        }
-        return cells;
-    },
-    isListChanged: function(cellsBeforeKeydown, cells) {
-        for(var i = 0; i < 4; i++) {
-            if(cellsBeforeKeydown[i].number != cells[i].number) {
-                return true;
-            }
-        }
-        return false;
     },
     isMovePossible: function() {
         var emptyCells = this.getEmptyCells();
@@ -169,17 +205,91 @@ var GameManager = {
 }
 
 var CellManager = {
+    getCellDiv: function(row, column) {
+        var cellId = '#' + row + column;
+        return $('#game').find(cellId);
+    },
 	show: function(cell) {
-		var cellId = '#' + cell.row + cell.column;
-		var cellDiv = $('#game').find(cellId);
-		// $(cellDiv).hide();
-		$(cellDiv).html(cell.number);
-		$(cellDiv).fadeIn("slow");
+        var cellDiv = this.getCellDiv(cell.row, cell.column);
+        cellDiv.html(this.getBox(cell));
 	},
-
-    getNumberInCell: function(row, column) {
+    getBox: function(cell) {
+        //REFACTOR
+        if(cell.number){
+            var boxId = "box-" + cell.row + "-" + cell.column;
+            return "<div " + "class='box " + boxId + "'>" + cell.number + "</div>"   
+        } else {
+            return "";
+        }
+    },
+    getBoxForClass: function(row, column, number) {
+        //RENAME TO GETBOX
+        var boxId = "box-" + row + "-" + column;
+        return "<div " + "class='box " + boxId + "'>" + number + "</div>";
+    },
+    getBoxInCell: function(row, column) {
     	var cellId = '#' + row + column;
-		return $('#game').find(cellId).text().trim();
+        var box = $('#game').find(cellId).find(".box");
+        if(box.length == 1) {
+            return box[0];
+        }  else {
+            return undefined;
+        }
+    },
+    getNumberInCell: function(row, column) {
+        var cellId = '#' + row + column;
+        var box = this.getBoxInCell(row, column);
+        if(box) {
+            return $(box).text().trim();
+        }
+    },
+    detachBox: function(row, column) {
+        var box = this.getBoxInCell(row, column);
+        $(box).detach();
+    },
+    attachBox: function(row, column, box) {
+        var cellDiv = this.getCellDiv(row, column);
+        $(cellDiv).html(box);
+        $(box).attr('class', 'box box-' + row + '-' + column);
+    }, 
+    moveBox: function(fromRow, fromCol, fromNum, toRow, toCol, toNum) {
+        
+        var classFrom = this.getClassNameForBox(fromRow, fromCol);
+        var classTo= this.getClassNameForBox(toRow, toCol);
+
+        var cellFrom = this.getCellDiv(fromRow, fromCol);
+        var cellTo = this.getCellDiv(toRow, toCol);
+
+        var boxFrom = this.getBoxInCell(fromRow, fromCol);
+        var boxTo = this.getBoxInCell(toRow, toCol);
+
+        if(!toNum) {
+            $(boxFrom).detach();
+            $(boxFrom).appendTo($(cellTo));
+
+            $(boxFrom).switchClass(classFrom, classTo, {
+                complete: function() {
+                    $(boxTo).detach();
+                }
+            });
+        } else {
+            var self = this;
+            $(boxFrom).switchClass(classFrom, classTo,
+                {complete: function() {
+                    var boxTo = self.getBoxInCell(toRow, toCol);
+                    if(boxTo) {
+                        $(boxTo).text(toNum);    
+                    } else {
+                        var newBox = self.getBoxForClass(toRow, toCol, toNum);
+                        console.log(newBox);
+                        $(newBox).appendTo($(cellTo));
+                    }
+                    $(boxFrom).detach();
+                }});            
+        }
+    }, 
+    getClassNameForBox: function(row, column) {
+        return "box-" + row + "-" + column;
     }
 }
 
