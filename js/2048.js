@@ -67,22 +67,21 @@ var GameManager = {
             var columnIndexManager = (targetCellIndex == 0) ? 1 : -1;
         }
 
-        var anyChanges = true;
+        var anyMove = false;
         for(var i = 0; i < 4; i++){
             if(isRow) {
                 var cells = this.getOrderedRow(targetCellIndex, rowIndexManager, i, 0);    
             } else {
                 var cells = this.getOrderedRow(i, 0, targetCellIndex, columnIndexManager);
             }
-            var changed = this.move(cells);
-            anyChanges = anyChanges || changed;
+            var moved = this.move(cells);
+            anyMove = anyMove || moved;
         }
-        if(anyChanges) {
+        if(anyMove) {
             var self = this;
             $(":animated").promise().done(function() {
                 self.insertNewNumber();
-            });
-            
+            });            
         } else {
             if(!this.isMovePossible()){
                 this.gameOver();
@@ -104,6 +103,7 @@ var GameManager = {
     },
 
     move: function(cells) {
+        var moved = false;
         var isAlreadyMerged = false;
         for(var currIndex = 0; currIndex< 3; currIndex++){
 
@@ -155,6 +155,7 @@ var GameManager = {
                             cells[secondNextIndex].num = undefined;
                             isAlreadyMerged = true;
 
+                            moved = true;
                             CellManager.moveBox(firstNextRow, firstNextColumn, firstNextNum, currRow, currColumn, cells[currIndex].num, true);
                             CellManager.moveBox(secondNextRow, secondNextColumn, secondNextNum, currRow, currColumn, cells[currIndex].num);
                             
@@ -163,7 +164,7 @@ var GameManager = {
                             
                             cells[currIndex].num = cells[firstNextIndex].num;
                             cells[firstNextIndex].num = undefined;
-
+                            moved = true;
                             CellManager.moveBox(firstNextRow, firstNextColumn, firstNextColumn, currRow, currColumn, currNum * 2);
 
                             break;
@@ -172,7 +173,7 @@ var GameManager = {
                 }
             }
         }
-        return cells;
+        return moved;
     },
     isMovePossible: function() {
         var emptyCells = this.getEmptyCells();
