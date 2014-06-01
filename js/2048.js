@@ -21,7 +21,7 @@ var GameManager = {
         var cellIndex = Helper.randomIntFromInterval(0, emptyCells.length-1);
         var cell = emptyCells[cellIndex];
         cell.number = Helper.randomIntFromInterval(0, 1) * 2 + 2;
-        CellManager.show(cell);
+        CellManager.show(cell.row, cell.column, cell.number);
     },
     getEmptyCells: function() {
         var emptyCells = [];
@@ -104,7 +104,7 @@ var GameManager = {
     },
 
     move: function(cells) {
-            var isAlreadyMerged = false;
+        var isAlreadyMerged = false;
         for(var currIndex = 0; currIndex< 3; currIndex++){
 
             var currRow = cells[currIndex].row;
@@ -155,7 +155,7 @@ var GameManager = {
                             cells[secondNextIndex].num = undefined;
                             isAlreadyMerged = true;
 
-                            CellManager.moveBox(firstNextRow, firstNextColumn, firstNextNum, currRow, currColumn, cells[currIndex].num);
+                            CellManager.moveBox(firstNextRow, firstNextColumn, firstNextNum, currRow, currColumn, cells[currIndex].num, true);
                             CellManager.moveBox(secondNextRow, secondNextColumn, secondNextNum, currRow, currColumn, cells[currIndex].num);
                             
                             break;
@@ -209,15 +209,15 @@ var CellManager = {
         var cellId = '#' + row + column;
         return $('#game').find(cellId);
     },
-	show: function(cell) {
-        var cellDiv = this.getCellDiv(cell.row, cell.column);
-        cellDiv.html(this.getBox(cell));
+	show: function(row, column, number) {
+        var cellDiv = this.getCellDiv(row, column);
+        cellDiv.html(this.getBox(row, column, number));
 	},
-    getBox: function(cell) {
+    getBox: function(row, column, number) {
         //REFACTOR
-        if(cell.number){
-            var boxId = "box-" + cell.row + "-" + cell.column;
-            return "<div " + "class='box " + boxId + "'>" + cell.number + "</div>"   
+        if(number){
+            var boxId = "box-" + row + "-" + column;
+            return "<div " + "class='box " + boxId + " num-" + number + "'>" + number + "</div>"   
         } else {
             return "";
         }
@@ -225,7 +225,7 @@ var CellManager = {
     getBoxForClass: function(row, column, number) {
         //RENAME TO GETBOX
         var boxId = "box-" + row + "-" + column;
-        return "<div " + "class='box " + boxId + "'>" + number + "</div>";
+        return "<div " + "class='box " + boxId + " num-" + number + "'>" + number + "</div>";
     },
     getBoxInCell: function(row, column) {
     	var cellId = '#' + row + column;
@@ -252,8 +252,8 @@ var CellManager = {
         $(cellDiv).html(box);
         $(box).attr('class', 'box box-' + row + '-' + column);
     }, 
-    moveBox: function(fromRow, fromCol, fromNum, toRow, toCol, toNum) {
-        
+    moveBox: function(fromRow, fromCol, fromNum, toRow, toCol, toNum, destroy) {
+        // console.log("[" + fromRow + "," + fromCol + "] " + fromNum + " -> [" + toRow + "," + toCol + "] " + toNum );
         var classFrom = this.getClassNameForBox(fromRow, fromCol);
         var classTo= this.getClassNameForBox(toRow, toCol);
 
@@ -263,29 +263,31 @@ var CellManager = {
         var boxFrom = this.getBoxInCell(fromRow, fromCol);
         var boxTo = this.getBoxInCell(toRow, toCol);
 
-        if(!toNum) {
+        if(!toNum || destroy) {
             $(boxFrom).detach();
-            $(boxFrom).appendTo($(cellTo));
+            if(!destroy) {
+                $(boxFrom).appendTo($(cellTo));   
+            }
 
-            $(boxFrom).switchClass(classFrom, classTo, {
+            $(boxFrom).switchClass(classFrom, classTo, 
+            {
+                duration: 100,
                 complete: function() {
                     $(boxTo).detach();
                 }
             });
         } else {
             var self = this;
-            $(boxFrom).switchClass(classFrom, classTo,
-                {complete: function() {
-                    var boxTo = self.getBoxInCell(toRow, toCol);
-                    if(boxTo) {
-                        $(boxTo).text(toNum);    
-                    } else {
+
+            $(boxFrom).switchClass(classFrom, classTo, {
+                    duration: 100, 
+                    complete: function() {
                         var newBox = self.getBoxForClass(toRow, toCol, toNum);
-                        console.log(newBox);
                         $(newBox).appendTo($(cellTo));
+                        $(boxFrom).detach();
+                        $(boxTo).detach();
                     }
-                    $(boxFrom).detach();
-                }});            
+            });            
         }
     }, 
     getClassNameForBox: function(row, column) {

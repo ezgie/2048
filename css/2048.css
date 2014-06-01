@@ -23,7 +23,7 @@ body {
 
 #button-new-game {
 	display: inline-block;
-	background-color: #FA0557;
+	background-color: #FA0557;	
 	width: 114px;
 	height: 40px;
 	margin: 0px 0px 30px 90px;
@@ -61,7 +61,7 @@ body {
 	width: 86px;
 	height: 86px;
 	border: 7px solid #B7BDAF;
-	background-color: #F2FAE8;
+	background-color: #8C8F88;
 	border-radius: 14px;
 }
 
@@ -71,14 +71,60 @@ body {
 	border: 7px solid #B7BDAF;
 	border-radius: 14px;
 	position: absolute;
-	border-color: #F2FAE8;
-	background-color: red;
-	color: white;
+	/*background-color: #F2FAE8;*/
+	/*background-color: #FAF5F7;*/
+	color: #FA0557;
 
     line-height: 86px;
 	text-align: center;
 	font-size: 32px;
 }
+
+.num-2 {
+	background-color: #F2FAE8;
+}
+
+.num-4 {
+	background-color: #DDE6D3;
+}
+
+.num-8 {
+	background-color: #C8CFC0;
+}
+
+.num-16 {
+	background-color: #B9C2AE;
+}
+
+.num-32 {
+	background-color: #A9B0A0;
+}
+
+.num-64 {
+	background-color: #FAF5F7;
+}
+
+.num-128 {
+	background-color: #FAE3EB;
+}
+
+.num-256 {
+	background-color: #FAD2DF;
+}
+
+.num-512 {
+	background-color: #FAB4CB;
+}
+
+.num-1024 {
+	background-color: #FC95B8;
+}
+
+.num-2048 {
+	background-color: #FF0055;
+	.color: white;
+}
+
 .box-0-0 {
 	top:0;
 	left: 0;
