@@ -38,6 +38,9 @@ var GameManager = {
         return emptyCells;
     },
     keydown: function(e) {
+        if($(":animated").length != 0) {
+            return;
+        }
         switch(e.which) {
             case 37: // left
             this.doActionKeydown(false, 0);
