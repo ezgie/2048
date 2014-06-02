@@ -49,6 +49,22 @@ body {
 	position: relative;
 }
 
+#gameover {
+	display: none;
+	width: 400px;
+	height: 400px;
+	border-radius: 14px;
+	background-color: #FA0557;
+	opacity: 0.5;
+	color: #F7FCF0;
+	text-align: center;
+	font-size: 48px;
+	line-height: 400px;
+	vertical-align: middle;
+	position: absolute;
+	z-index: 10;
+}
+
 .row
 {
 	width: 400px;

@@ -4,17 +4,27 @@ $(document).keydown(function(e){
 
 $( document ).ready(function() {
 	$('#button-new-game').click(function() {
+
         GameManager.startNewGame();
+        $('#gameover').fadeOut({
+            duration:1000,
+            complete: function() {
+                GameManager.isGameOver = false;
+            }
+        });
+        
 	});
 
     GameManager.startNewGame();
 });
 
 var GameManager = {
+    isGameOver: true,
     startNewGame: function() {
         $('#game').find('.row').find('.cell').empty();
         this.insertNewNumber();
         this.insertNewNumber();
+        this.isGameOver = false;
     },
     insertNewNumber: function(){
         var emptyCells = this.getEmptyCells();
@@ -38,7 +48,7 @@ var GameManager = {
         return emptyCells;
     },
     keydown: function(e) {
-        if($(":animated").length != 0) {
+        if(this.isGameOver || $(":animated").length != 0) {
             return;
         }
         switch(e.which) {
@@ -204,7 +214,9 @@ var GameManager = {
         return false;
     },
     gameOver: function() {
-        alert("TODO - gameOver");
+        this.isGameOver = true;
+        $('#gameover').fadeIn({duration:1000});
+
     }
 }
 
