@@ -12,6 +12,12 @@ $( document ).ready(function() {
                 GameManager.isGameOver = false;
             }
         });
+        $('#won').fadeOut({
+            duration:1000,
+            complete: function() {
+                GameManager.isWon = false;
+            }
+        });
 	});
 
     // GameManager.startNewGame();
@@ -19,11 +25,13 @@ $( document ).ready(function() {
 
 var GameManager = {
     isGameOver: false,
+    isWon: false,
     startNewGame: function() {
         $('#game').find('.row').find('.cell').empty();
         this.insertNewNumber();
         this.insertNewNumber();
         this.isGameOver = false;
+        this.isWon = false;
     },
     insertNewNumber: function(){
         var emptyCells = this.getEmptyCells();
@@ -47,7 +55,9 @@ var GameManager = {
         return emptyCells;
     },
     keydown: function(e) {
-        if(this.isGameOver || $(":animated").length != 0) {
+        if(this.isGameOver 
+            || this.isWon
+            || $(":animated").length != 0) {
             return;
         }
         switch(e.which) {
@@ -93,14 +103,14 @@ var GameManager = {
     },
 
     doAfterMove: function(anyMove) {
-        if(anyMove) {
+        if(anyMove && !this.isWon) {
             var self = this;
             $(":animated").promise().done(function() {
                 self.insertNewNumber();
             });            
         } else {
             if(!this.isMovePossible()){
-                this.gameOver();
+                this.doGameOver();
             }
         }
     },
@@ -165,10 +175,13 @@ var GameManager = {
                     } else {
                         moved = true;
 
-                        cells[currIndex].num = cells[firstNextIndex].num;
+                        cells[currIndex].num = currNum * 2;
                         cells[firstNextIndex].num = undefined;
 
                         CellManager.moveBox(firstNextRow, firstNextColumn, firstNextNum, currRow, currColumn, currNum * 2);
+                    }
+                    if(cells[currIndex].num == 2048){
+                        this.doWin();
                     }
                     break;
                 }
@@ -201,10 +214,13 @@ var GameManager = {
         }
         return false;
     },
-    gameOver: function() {
+    doGameOver: function() {
         this.isGameOver = true;
         $('#gameover').fadeIn({duration:1000});
-
+    },
+    doWin: function() {
+        this.isWon = true;
+        $('#won').fadeIn({duration:1000});        
     }
 }
 
