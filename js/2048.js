@@ -12,14 +12,13 @@ $( document ).ready(function() {
                 GameManager.isGameOver = false;
             }
         });
-        
 	});
 
-    GameManager.startNewGame();
+    // GameManager.startNewGame();
 });
 
 var GameManager = {
-    isGameOver: true,
+    isGameOver: false,
     startNewGame: function() {
         $('#game').find('.row').find('.cell').empty();
         this.insertNewNumber();
@@ -70,7 +69,6 @@ var GameManager = {
 
             default: return;
         }
-        e.preventDefault();
     },
 
     doActionKeydown: function(isRow, targetCellIndex) {
@@ -81,15 +79,20 @@ var GameManager = {
         }
 
         var anyMove = false;
+        var cells;
         for(var i = 0; i < 4; i++){
             if(isRow) {
-                var cells = this.getOrderedRow(targetCellIndex, rowIndexManager, i, 0);    
+                cells = this.getOrderedRow(targetCellIndex, rowIndexManager, i, 0);    
             } else {
-                var cells = this.getOrderedRow(i, 0, targetCellIndex, columnIndexManager);
+                cells = this.getOrderedRow(i, 0, targetCellIndex, columnIndexManager);
             }
             var moved = this.move(cells);
             anyMove = anyMove || moved;
         }
+        this.doAfterMove(anyMove);
+    },
+
+    doAfterMove: function(anyMove) {
         if(anyMove) {
             var self = this;
             $(":animated").promise().done(function() {
@@ -117,72 +120,57 @@ var GameManager = {
 
     move: function(cells) {
         var moved = false;
-        var isAlreadyMerged = false;
         for(var currIndex = 0; currIndex< 3; currIndex++){
 
             var currRow = cells[currIndex].row;
             var currColumn = cells[currIndex].column;
             var currNum = cells[currIndex].num;
 
-            if(currNum && isAlreadyMerged) {
-                continue;
-            } else {
-                for(var firstNextIndex=currIndex+1; firstNextIndex<4; firstNextIndex++) {
+            for(var firstNextIndex=currIndex+1; firstNextIndex<4; firstNextIndex++) {
 
-                    if(cells[firstNextIndex].num) {
+                if(cells[firstNextIndex].num) {
 
-                        var firstNextRow = cells[firstNextIndex].row;
-                        var firstNextColumn = cells[firstNextIndex].column;
-                        var firstNextNum = cells[firstNextIndex].num;
+                    var firstNextRow = cells[firstNextIndex].row;
+                    var firstNextColumn = cells[firstNextIndex].column;
+                    var firstNextNum = cells[firstNextIndex].num;
 
-                        if(currNum && currNum != firstNextNum) {
-                            break;
-                        } else if(!currNum) {
-                            var secondNextRow = undefined;
-                            var secondNextColumn = undefined;
-                            var secondNextNum = undefined;
+                    if(currNum && currNum != firstNextNum) {
+                        break;
+                    } else if(!currNum) {
+                        var secondNextRow = undefined;
+                        var secondNextColumn = undefined;
+                        var secondNextNum = undefined;
+                        var secondNextIndex = firstNextIndex+1;
 
-                            var secondNextIndex = firstNextIndex+1;
-
-                            if(!isAlreadyMerged && firstNextIndex < 3) {
-
-                                secondNextIndex = firstNextIndex+1;
-                                while(secondNextIndex < 4) {
-                                    if(cells[secondNextIndex].num) {
-                                        secondNextRow = cells[secondNextIndex].row;
-                                        secondNextColumn = cells[secondNextIndex].column;
-                                        secondNextNum = cells[secondNextIndex].num;
-
-                                        if(secondNextNum == firstNextNum) {
-                                            break;
-                                        }
-                                        
-                                    }
-                                    secondNextIndex += 1;
-                                }
+                        while(secondNextIndex < 4) {
+                            if(cells[secondNextIndex].num) {
+                                secondNextRow = cells[secondNextIndex].row;
+                                secondNextColumn = cells[secondNextIndex].column;
+                                secondNextNum = cells[secondNextIndex].num;
+                                break;
                             }
-                        }
-                        if(firstNextNum == secondNextNum) {
-                            cells[currIndex].num = cells[firstNextIndex].num * 2;
-                            cells[firstNextIndex].num = undefined;
-                            cells[secondNextIndex].num = undefined;
-                            isAlreadyMerged = true;
-
-                            moved = true;
-                            CellManager.moveBox(firstNextRow, firstNextColumn, firstNextNum, currRow, currColumn, cells[currIndex].num, true);
-                            CellManager.moveBox(secondNextRow, secondNextColumn, secondNextNum, currRow, currColumn, cells[currIndex].num);
-                            
-                            break;
-                        } else {
-                            
-                            cells[currIndex].num = cells[firstNextIndex].num;
-                            cells[firstNextIndex].num = undefined;
-                            moved = true;
-                            CellManager.moveBox(firstNextRow, firstNextColumn, firstNextColumn, currRow, currColumn, currNum * 2);
-
-                            break;
+                            secondNextIndex += 1;
                         }
                     }
+
+                    if(firstNextNum == secondNextNum) {
+                        moved = true;
+
+                        cells[currIndex].num = cells[firstNextIndex].num * 2;
+                        cells[firstNextIndex].num = undefined;
+                        cells[secondNextIndex].num = undefined;
+
+                        CellManager.moveBox(firstNextRow, firstNextColumn, firstNextNum, currRow, currColumn, cells[currIndex].num, true);
+                        CellManager.moveBox(secondNextRow, secondNextColumn, secondNextNum, currRow, currColumn, cells[currIndex].num);
+                    } else {
+                        moved = true;
+
+                        cells[currIndex].num = cells[firstNextIndex].num;
+                        cells[firstNextIndex].num = undefined;
+
+                        CellManager.moveBox(firstNextRow, firstNextColumn, firstNextNum, currRow, currColumn, currNum * 2);
+                    }
+                    break;
                 }
             }
         }
@@ -221,16 +209,15 @@ var GameManager = {
 }
 
 var CellManager = {
-    getCellDiv: function(row, column) {
+	show: function(row, column, number) {
+        var cell = this.getCell(row, column);
+        cell.html(this.createBox(row, column, number));
+	},
+    getCell: function(row, column) {
         var cellId = '#' + row + column;
         return $('#game').find(cellId);
     },
-	show: function(row, column, number) {
-        var cellDiv = this.getCellDiv(row, column);
-        cellDiv.html(this.getBox(row, column, number));
-	},
-    getBox: function(row, column, number) {
-        //REFACTOR
+    createBox: function(row, column, number) {
         if(number){
             var boxId = "box-" + row + "-" + column;
             return "<div " + "class='box " + boxId + " num-" + number + "'>" + number + "</div>"   
@@ -238,14 +225,8 @@ var CellManager = {
             return "";
         }
     },
-    getBoxForClass: function(row, column, number) {
-        //RENAME TO GETBOX
-        var boxId = "box-" + row + "-" + column;
-        return "<div " + "class='box " + boxId + " num-" + number + "'>" + number + "</div>";
-    },
     getBoxInCell: function(row, column) {
-    	var cellId = '#' + row + column;
-        var box = $('#game').find(cellId).find(".box");
+        var box = this.getCell(row, column).find(".box");
         if(box.length == 1) {
             return box[0];
         }  else {
@@ -253,28 +234,17 @@ var CellManager = {
         }
     },
     getNumberInCell: function(row, column) {
-        var cellId = '#' + row + column;
         var box = this.getBoxInCell(row, column);
         if(box) {
             return $(box).text().trim();
         }
-    },
-    detachBox: function(row, column) {
-        var box = this.getBoxInCell(row, column);
-        $(box).detach();
-    },
-    attachBox: function(row, column, box) {
-        var cellDiv = this.getCellDiv(row, column);
-        $(cellDiv).html(box);
-        $(box).attr('class', 'box box-' + row + '-' + column);
-    }, 
+    },   
     moveBox: function(fromRow, fromCol, fromNum, toRow, toCol, toNum, destroy) {
         // console.log("[" + fromRow + "," + fromCol + "] " + fromNum + " -> [" + toRow + "," + toCol + "] " + toNum );
         var classFrom = this.getClassNameForBox(fromRow, fromCol);
         var classTo= this.getClassNameForBox(toRow, toCol);
 
-        var cellFrom = this.getCellDiv(fromRow, fromCol);
-        var cellTo = this.getCellDiv(toRow, toCol);
+        var cellTo = this.getCell(toRow, toCol);
 
         var boxFrom = this.getBoxInCell(fromRow, fromCol);
         var boxTo = this.getBoxInCell(toRow, toCol);
@@ -294,15 +264,14 @@ var CellManager = {
             });
         } else {
             var self = this;
-
             $(boxFrom).switchClass(classFrom, classTo, {
-                    duration: 100, 
-                    complete: function() {
-                        var newBox = self.getBoxForClass(toRow, toCol, toNum);
-                        $(newBox).appendTo($(cellTo));
-                        $(boxFrom).detach();
-                        $(boxTo).detach();
-                    }
+                duration: 100, 
+                complete: function() {
+                    var newBox = self.createBox(toRow, toCol, toNum);
+                    $(newBox).appendTo($(cellTo));
+                    $(boxFrom).detach();
+                    $(boxTo).detach();
+                }
             });            
         }
     }, 
