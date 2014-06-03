@@ -20,7 +20,7 @@ $( document ).ready(function() {
         });
 	});
 
-    // GameManager.startNewGame();
+    GameManager.startNewGame();
 });
 
 var GameManager = {
